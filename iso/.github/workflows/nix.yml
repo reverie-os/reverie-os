@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
+  schedule:
+    # Nightly rolling build from main (runs in the split repo).
+    - cron: '0 2 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -33,3 +38,61 @@ jobs:
       # Standalone proof: this repo builds without the meta checkout.
       - name: Build ISO
         run: nix build .#packages.x86_64-linux.iso --print-build-logs --out-link result-ci
+
+      # Copy out of /nix/store (symlinked out-link) so artifact upload follows a real file.
+      # Runs for any non-PR event; PRs only verify the build.
+      - name: Stage ISO
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p dist
+          cp result-ci/iso/*.iso dist/
+          ls -lh dist/
+
+      - name: Upload ISO artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-image
+          path: dist/*.iso
+          retention-days: 1
+
+  # Rolling release: exactly one `nightly` release, asset overwritten each run.
+  nightly:
+    needs: build
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: iso-image
+          path: dist/
+
+      - name: Publish nightly release
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          tag_name: nightly
+          name: Nightly build
+          body: Nightly build of main branch (${{ github.sha }}).
+          prerelease: true
+          make_latest: false
+          files: dist/*.iso
+
+  # Versioned release: meta tag `v*` splits to this repo, build attaches the ISO.
+  versioned:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: iso-image
+          path: dist/
+
+      - name: Publish versioned release
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: dist/*.iso
