@@ -1,0 +1,35 @@
+name: Nix
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v23
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+
+      # Evaluation-only: catches flake errors without paying for the ISO build twice
+      # (`nix flake check` without --no-build would build packages.iso itself).
+      - name: Evaluate flake
+        run: nix flake check --no-build --print-build-logs
+
+      # Standalone proof: this repo builds without the meta checkout.
+      - name: Build ISO
+        run: nix build .#packages.x86_64-linux.iso --print-build-logs --out-link result-ci
