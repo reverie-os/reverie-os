@@ -1,0 +1,60 @@
+name: 'Packages Split'
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  workflow_dispatch: {}
+
+env:
+  GITHUB_TOKEN: ${{ secrets.SPLIT_PAT }}
+
+jobs:
+  packages_split:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # To add a split: append one line { local_path, split_repository }.
+        # local_path = subdir in meta, split_repository = repo in reverie-os org.
+        package:
+          - local_path: 'iso'
+            split_repository: 'iso'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # no tag — split branch
+      - name: Split ${{ matrix.package.local_path }}
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: danharrin/monorepo-split-github-action@v2.4.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_PAT }}
+        with:
+          package_directory: '${{ matrix.package.local_path }}'
+          repository_organization: 'reverie-os'
+          repository_name: '${{ matrix.package.split_repository }}'
+          branch: 'main'
+          user_name: 'reverie-os-bot'
+          user_email: 'bot@reverie-os.org'
+
+      # with tag — propagate tags to splits
+      - name: Split tag ${{ matrix.package.local_path }}
+        if: "startsWith(github.ref, 'refs/tags/')"
+        uses: danharrin/monorepo-split-github-action@v2.4.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_PAT }}
+        with:
+          tag: ${{ github.ref_name }}
+          package_directory: '${{ matrix.package.local_path }}'
+          repository_organization: 'reverie-os'
+          repository_name: '${{ matrix.package.split_repository }}'
+          branch: 'main'
+          user_name: 'reverie-os-bot'
+          user_email: 'bot@reverie-os.org'
