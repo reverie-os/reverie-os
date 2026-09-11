@@ -28,8 +28,6 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@v23
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v15
-
       # Evaluation-only: catches flake errors without paying for the ISO build twice
       # (`nix flake check` without --no-build would build packages.iso itself).
       - name: Evaluate flake

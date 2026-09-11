@@ -9,9 +9,12 @@
     # To add a split: add `foo.url = "path:./foo";` + follows lines.
     iso.url = "path:./iso";
     iso.inputs.nixpkgs.follows = "nixpkgs";
+    nixconf.url = "path:./nixconf";
+    nixconf.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, iso }: {
-    inherit (iso) nixosConfigurations packages;
+  outputs = { self, nixpkgs, iso, nixconf }: {
+    nixosConfigurations = iso.nixosConfigurations // nixconf.nixosConfigurations;
+    packages = iso.packages // (nixconf.packages or { });
   };
 }

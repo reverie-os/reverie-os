@@ -23,6 +23,8 @@ jobs:
         package:
           - local_path: 'iso'
             split_repository: 'iso'
+          - local_path: 'nixconf'
+            split_repository: 'nixconf'
 
     steps:
       - uses: actions/checkout@v4

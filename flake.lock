@@ -16,6 +16,22 @@
       },
       "parent": []
     },
+    "nixconf": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./nixconf",
+        "type": "path"
+      },
+      "original": {
+        "path": "./nixconf",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1767313136,
@@ -35,6 +51,7 @@
     "root": {
       "inputs": {
         "iso": "iso",
+        "nixconf": "nixconf",
         "nixpkgs": "nixpkgs"
       }
     }
