@@ -105,7 +105,11 @@ lint_one() {
   fi
 
   # Sections: collect [scope]: lines, each must name a listed scope.
+  # NOTE: the forward splitter copies only the subject line into minis,
+  # so section rules are enforced in the meta lane only. The split lane
+  # just needs header shape + its own scope (checked below).
   local -a sections=()
+  if [ "$REPO" = "meta" ]; then
   while IFS= read -r line; do
     if [[ "$line" =~ ^\[([a-z0-9-]+)\]: ]]; then
       sections+=("${BASH_REMATCH[1]}")
@@ -123,6 +127,7 @@ lint_one() {
       printf '%s\n' ${sections[@]+"${sections[@]}"} | grep -qx "$s" \
         || { echo "  FAIL: multi-scope commit needs a [$s]: section (see FORMAT.md)" >&2; return 1; }
     done
+  fi
   fi
 
   # Split-lane rule: message must name its own repo.

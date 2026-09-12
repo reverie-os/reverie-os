@@ -80,6 +80,8 @@ chore(meta): document commit format
   (minis don't contain it — see limitation below), so mind the format
   and let CI tell you. Scope in a split repo must include that repo's
   own name, e.g. `fix(iso): …` in `reverie-os/iso`.
-- v0.1 limitation: forward split copies the *full* message verbatim, so
-  a multi-scope message appears in full in each mini. Sections keep it
-  readable until the per-mini extractor lands.
+- v0.1 limitation: forward split copies the *subject line only* into
+  minis (verified: `git subtree split` keeps bodies, the split action
+  does not). So `[scope]:` sections and the free body live in meta
+  history; minis enforce header shape + own scope. The per-mini
+  extractor remains a v0.2 item.
