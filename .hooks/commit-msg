@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# commit-msg hook — enforces FORMAT.md on `git commit` in the meta repo.
+# Installed via scripts/install-hooks.sh (symlinked to .git/hooks/commit-msg).
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+MSG_FILE="$1"
+FILES_TMP="$(mktemp)"
+trap 'rm -f "$FILES_TMP"' EXIT
+git diff --cached --name-only > "$FILES_TMP"
+exec "$ROOT/scripts/commit-lint.sh" --repo=meta --msg-file="$MSG_FILE" --files="$FILES_TMP"

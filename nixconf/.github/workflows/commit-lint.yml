@@ -1,0 +1,40 @@
+name: Commit lint
+
+# NOTE: this file lives in the meta repo at nixconf/.github/workflows/ and is
+# forward-split to reverie-os/nixconf. The `meta/` checkout below reuses the
+# single shared linter so both lanes enforce identical rules (FORMAT.md).
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        with:
+          repository: reverie-os/reverie-os
+          ref: main
+          path: meta
+          fetch-depth: 1
+
+      - name: Lint new commit messages
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}..HEAD"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            RANGE="HEAD~1..HEAD"
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          echo "range: $RANGE"
+          bash meta/scripts/commit-lint.sh --repo=nixconf --range="$RANGE"
